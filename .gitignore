@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Bot Specific
+bot_token.txt
+config_local.py
+
+# OS
+Thumbs.db
+.DS_Store
+# --- secrets / environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+upload-key
+# --- dependencies / build output ---
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.next/
+dist/
+build/
+# --- runtime state, logs, local data ---
+*.log
+logs/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*
+sessions/
+# --- backups and one-off leftovers ---
+*.bak
+*.bak-*
+*.bak.*
+*.prepresence
+*.tar.gz
+*.zip
+.DS_Store
+data/
