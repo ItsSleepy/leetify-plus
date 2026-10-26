@@ -1,11 +1,20 @@
-﻿import os
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _key_file():
+    """Leetify API key from leetify.key next to this file (kept out of git), if not set in the environment."""
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'leetify.key')) as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
 class Config:
     DISCORD_TOKEN   = os.getenv('DISCORD_TOKEN')
-    LEETIFY_API_KEY = os.getenv('LEETIFY_API_KEY', 'f9d02f9d-684f-47c5-aed8-d7803a4d37dc')
+    LEETIFY_API_KEY = os.getenv('LEETIFY_API_KEY') or _key_file()
 
     @classmethod
     def validate(cls):

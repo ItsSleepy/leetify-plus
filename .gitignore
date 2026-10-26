@@ -91,3 +91,7 @@ sessions/
 *.zip
 .DS_Store
 data/
+
+# secrets
+.env
+leetify.key
