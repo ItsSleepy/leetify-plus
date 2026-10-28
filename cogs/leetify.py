@@ -435,6 +435,35 @@ def _iso_to_ts(iso: str) -> int:
 # ──────────────────────────────────────────────
 # Cog
 # ──────────────────────────────────────────────
+# ─────────────────────────────────────────
+# Steam ID input: accept a 17-digit ID, a profile link, or a custom URL name
+# ─────────────────────────────────────────
+_VANITY = re.compile(r"[A-Za-z0-9_-]{2,32}")
+
+
+async def resolve_steam_id(text: str) -> Tuple[Optional[str], Optional[str]]:
+    """Returns (steam64_id, None) or (None, error message)."""
+    t = (text or "").strip().rstrip("/")
+    m = re.search(r"(\d{17})", t)
+    if m and (re.fullmatch(r"\d{17}", t) or "/profiles/" in t):
+        return m.group(1), None
+    m = re.search(r"steamcommunity\.com/id/([^/?#]+)", t)
+    name = m.group(1) if m else t
+    if not _VANITY.fullmatch(name):
+        return None, "That doesn't look like a Steam ID, profile link or custom URL name."
+    try:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(f"https://steamcommunity.com/id/{name}/?xml=1") as r:
+                body = await r.text()
+    except Exception:
+        return None, "Couldn't reach Steam to look that name up. Try again in a minute."
+    m = re.search(r"<steamID64>(\d{17})</steamID64>", body)
+    if not m:
+        return None, f"No Steam profile found for the custom URL `{name}`."
+    return m.group(1), None
+
+
 class Leetify(commands.Cog):
     """CS2 stats powered by the Leetify Public API."""
 
@@ -473,12 +502,13 @@ class Leetify(commands.Cog):
     # ─────────────────────────────────────────
     leetify_group = app_commands.Group(name="leetify", description="CS2 stats via Leetify")
 
-    @leetify_group.command(name="link", description="Link your Discord account to a Steam64 ID")
-    @app_commands.describe(steam64_id="Your 17-digit Steam64 ID")
+    @leetify_group.command(name="link", description="Link your Discord account to your Steam account")
+    @app_commands.describe(steam64_id="Your Steam64 ID, Steam profile link, or custom URL name (steamcommunity.com/id/NAME)")
     async def link(self, interaction: discord.Interaction, steam64_id: str):
         await interaction.response.defer(ephemeral=True)
-        if not re.fullmatch(r"\d{17}", steam64_id):
-            await interaction.followup.send("❌ Please provide a valid 17-digit Steam64 ID.", ephemeral=True)
+        steam64_id, err = await resolve_steam_id(steam64_id)
+        if err:
+            await interaction.followup.send(f"❌ {err}", ephemeral=True)
             return
         # Verify the account exists on Leetify
         profile = await self.client.get_profile(steam64_id)
@@ -578,12 +608,13 @@ class Leetify(commands.Cog):
         )
 
     @leetify_group.command(name="addwatch", description="Watch a Steam ID for new matches (auto-posts)")
-    @app_commands.describe(steam64_id="The 17-digit Steam64 ID to watch")
+    @app_commands.describe(steam64_id="Steam64 ID, Steam profile link, or custom URL name to watch")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def addwatch(self, interaction: discord.Interaction, steam64_id: str):
         await interaction.response.defer(ephemeral=True)
-        if not re.fullmatch(r"\d{17}", steam64_id):
-            await interaction.followup.send("❌ Invalid Steam64 ID.", ephemeral=True)
+        steam64_id, err = await resolve_steam_id(steam64_id)
+        if err:
+            await interaction.followup.send(f"❌ {err}", ephemeral=True)
             return
 
         # Get current latest match ID as baseline
